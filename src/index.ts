@@ -2,12 +2,13 @@
 
 import path from 'node:path'
 import url from 'node:url'
-import { rm, writeFile } from 'node:fs/promises'
+import { readFile, rm, writeFile } from 'node:fs/promises'
 import cac from 'cac'
 import ora from 'ora'
 import chalk from 'chalk'
 import inquirer from 'inquirer'
 import inquirerFileTreeSelection from 'inquirer-file-tree-selection-prompt'
+import jsonc from 'jsonc-parser'
 import { execaCommand } from 'execa'
 
 inquirer.registerPrompt('file-tree-selection', inquirerFileTreeSelection)
@@ -31,8 +32,20 @@ interface RootAndTarget {
   targetAbsPath: string
 }
 
+function printTipsForFileChanged() {
+  console.log(
+    `\n💡 ${chalk.yellow(
+      "Tips: If you changed these 'error-files' while reading errors count below, the data may be not correct."
+    )}\n`
+  )
+}
 function isFilePath(absPath: string) {
   return (absPath.split(path.sep).pop()?.split('.').length ?? 0) > 1
+}
+function getRawErrsSumCount(rawErrsMap: RawErrsMap) {
+  return [...rawErrsMap.values()].reduce((prev, next) => {
+    return (prev += next.length)
+  }, 0)
 }
 function getTargetDir(dirArg: string): string {
   if (!dirArg) {
@@ -118,15 +131,14 @@ async function getTscCompileStdout(
 ) {
   const { root = process.cwd(), pretty = false, targetAbsPath = root } = options
   const baseConfigPath = path.join(root, 'tsconfig.json')
+  const baseConfigJSON = jsonc.parse(String(await readFile(baseConfigPath)))
   const tmpConfigPath = path.join(root, 'tsconfig.tmp.json')
 
+  // Use a temp tsconfig
   try {
-    const tmpTsConfig: Record<string, any> = {
-      extends: baseConfigPath,
-      compilerOptions: {
-        emitDeclarationOnly: false,
-      },
-    }
+    const tmpTsConfig: Record<string, any> = { ...baseConfigJSON }
+    // Avoid conflict with --noEmit
+    tmpTsConfig.compilerOptions.emitDeclarationOnly = false
     if (isFilePath(targetAbsPath)) {
       tmpTsConfig.files = [targetAbsPath]
     }
@@ -141,11 +153,11 @@ async function getTscCompileStdout(
 
   let tscErrorStdout = ''
   try {
-    const cmd = `tsc --noEmit --project ${tmpConfigPath} --pretty ${pretty}`
+    const cmd = `tsc --noEmit --pretty ${pretty} -p ${tmpConfigPath}`
     console.log(
       `\n$ ${chalk.yellowBright(root)}\n  ${chalk.bold.gray(
         `tsc running on ${chalk.bold.blue(targetAbsPath)} ...`
-      )}\n`
+      )}\n  ${chalk.grey(`> ${cmd}`)}`
     )
     tscSpinner.start()
     const tscProcess = execaCommand(cmd, {
@@ -198,36 +210,32 @@ async function selectFile(
   }
 ) {
   const { root, targetAbsPath, rawErrsMap } = options
-  const errsCountNumLength = String(
-    [...rawErrsMap.values()].reduce((prev, next) => {
-      return (prev += next.length)
-    }, 0)
-  ).length
+  const errsCountNumLength = String(getRawErrsSumCount(rawErrsMap)).length
 
-  // Aggregation by file path and make an interactive view to select
-  const isOptionPathHasErr =
-    (optionStr: string) => (relativeToRoot: string) => {
+  const isUnderProjectRoot =
+    (optionPath: string) => (relativeToRoot: string) => {
       const absPath = path.join(root, relativeToRoot)
-      return absPath.includes(optionStr)
+      return absPath.includes(optionPath)
     }
-  const optionStrTransformer = (optionStr: string) => {
-    if (optionStr === targetAbsPath) {
+  const optionPathTransformer = (optionPath: string) => {
+    if (optionPath === targetAbsPath) {
       return chalk.yellowBright(`root: ${targetAbsPath}`)
     }
 
-    const optionStrLastUnit = optionStr.split(path.sep).pop() ?? ''
-    const optionStrIsFilePath = isFilePath(optionStrLastUnit)
-    const colorFn = optionStrIsFilePath
+    const optionPathLastUnit = optionPath.split(path.sep).pop() ?? ''
+    const optionPathIsFilePath = isFilePath(optionPathLastUnit)
+    const colorFn = optionPathIsFilePath
       ? chalk.blue
       : chalk.italic.bold.yellowBright
-    const errsCountInPath = [...rawErrsMap.keys()]
-      .filter(isOptionPathHasErr(optionStr))
-      .reduce((prev, hasErrPath) => {
+    const errsCountInPath = [...rawErrsMap.keys()].reduce(
+      (prev, hasErrPath) => {
         return prev + (rawErrsMap.get(hasErrPath)?.length ?? 0)
-      }, 0)
+      },
+      0
+    )
     return `${chalk.bold.redBright(
       `${String(errsCountInPath).padStart(errsCountNumLength)} errors`
-    )} ${colorFn(optionStrLastUnit + (optionStrIsFilePath ? '' : '/'))}`
+    )} ${colorFn(optionPathLastUnit + (optionPathIsFilePath ? '' : '/'))}`
   }
   const selectedFilePath = await inquirer.prompt([
     {
@@ -236,11 +244,15 @@ async function selectFile(
       message: 'select file to show error details',
       pageSize: 20,
       root: targetAbsPath, // this `root` property is different, it's used for display a directory's file tree
+      // Maybe some tsc errors are out of this root
       onlyShowValid: true,
-      validate: (optionStr) => {
-        return [...rawErrsMap.keys()].some(isOptionPathHasErr(optionStr))
+      validate: (optionPath: string) => {
+        const hasErrilesUnderRoot = [...rawErrsMap.keys()].some(
+          isUnderProjectRoot(optionPath)
+        )
+        return hasErrilesUnderRoot
       },
-      transformer: optionStrTransformer,
+      transformer: optionPathTransformer,
     },
   ])
   return selectedFilePath?.file ?? ''
@@ -263,14 +275,18 @@ _____         _____           ____  _
     root: rootAbsPath,
     targetAbsPath: rootAbsPath,
   }
+
+  // Generate a map to store errors info
   const rawAllErrsMap = await getRawErrsMap(baseRootAndTarget)
   let selectedPath = rootAbsPath
-  console.log(
-    `\n💡 ${chalk.yellow(
-      "Tips: If you changed these 'error-files' while reading errors count below, the data may be not correct."
-    )}\n`
-  )
+  printTipsForFileChanged()
+
+  if (getRawErrsSumCount(rawAllErrsMap) === 0) {
+    console.log(`\n🎉 ${chalk.bold.greenBright('Found 0 Errors.')}\n`)
+    process.exit()
+  }
   do {
+    // Aggregation by file path and make an interactive view to select
     selectedPath = await selectFile({
       root: rootAbsPath,
       targetAbsPath: selectedPath,

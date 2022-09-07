@@ -15,6 +15,7 @@ specifiers:
   fast-glob: ^3.2.11
   inquirer: ^9.1.1
   inquirer-file-tree-selection-prompt: ^2.0.4
+  jsonc-parser: ^3.2.0
   lodash: ^4.17.21
   ora: ^6.1.2
   prettier: ^2.7.1
@@ -29,6 +30,7 @@ dependencies:
   execa: 6.1.0
   inquirer: 9.1.1
   inquirer-file-tree-selection-prompt: 2.0.4_inquirer@9.1.1
+  jsonc-parser: 3.2.0
   lodash: 4.17.21
   ora: 6.1.2
 
@@ -2252,6 +2254,10 @@ packages:
       espree: 9.4.0
       semver: 7.3.7
     dev: true
+
+  /jsonc-parser/3.2.0:
+    resolution: {integrity: sha512-gfFQZrcTc8CnKXp6Y4/CBT3fTc0OVuDofpre4aEeEpSBPV5X5v4+Vmx+8snU7RLPrNHPKSgLxGo9YuQzz20o+w==}
+    dev: false
 
   /kleur/3.0.3:
     resolution: {integrity: sha512-eTIzlVOSUR+JxdDFepEYcBMtZ9Qqdef+rnzWdRZuMbOywu5tO2w2N7rqjoANZ5k9vywhL6Br1VRjUIgTQx4E8w==}
