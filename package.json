@@ -1,0 +1,66 @@
+{
+  "name": "@slackoff/tsc-err-dirs",
+  "version": "0.0.1",
+  "packageManager": "pnpm@7.9.5",
+  "description": "Show tsc errors by directories.",
+  "license": "MIT",
+  "files": [
+    "dist"
+  ],
+  "bin": {
+    "tsc-err-dirs": "./dist/index.mjs"
+  },
+  "main": "./dist/index.mjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "require": "./dist/index.js",
+    "import": "./dist/index.mjs"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "lint": "eslint . --ext .vue,.js,.ts,.jsx,.tsx,.json,.md",
+    "lint:fix": "pnpm run lint --fix",
+    "build": "tsup",
+    "test": "vitest",
+    "release": "bumpp && pnpm publish",
+    "prepublishOnly": "pnpm run build"
+  },
+  "devDependencies": {
+    "@sxzz/eslint-config-prettier": "^2.4.1",
+    "@sxzz/eslint-config-ts": "^2.4.1",
+    "@types/inquirer": "^9.0.1",
+    "@types/lodash": "^4.14.184",
+    "@types/node": "*",
+    "bumpp": "^8.2.1",
+    "eslint": "^8.23.0",
+    "eslint-define-config": "^1.6.0",
+    "fast-glob": "^3.2.11",
+    "prettier": "^2.7.1",
+    "tsup": "^6.2.3",
+    "tsx": "^3.8.2",
+    "typescript": "^4.8.2",
+    "vitest": "^0.22.1"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "dependencies": {
+    "cac": "^6.7.14",
+    "chalk": "^5.0.1",
+    "execa": "^6.1.0",
+    "inquirer": "^9.1.1",
+    "inquirer-file-tree-selection-prompt": "^2.0.4",
+    "lodash": "^4.17.21",
+    "ora": "^6.1.2"
+  },
+  "repository": {
+    "type": "Git",
+    "url": "https://github.com/ShenQingchuan/tsc-err-dirs"
+  },
+  "author": {
+    "name": "ShenQingchuan"
+  }
+}
