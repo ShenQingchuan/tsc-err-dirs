@@ -265,6 +265,11 @@ _____         _____           ____  _
   }
   const rawAllErrsMap = await getRawErrsMap(baseRootAndTarget)
   let selectedPath = rootAbsPath
+  console.log(
+    `\n💡 ${chalk.yellow(
+      "Tips: If you changed these 'error-files' while reading errors count below, the data may be not correct."
+    )}\n`
+  )
   do {
     selectedPath = await selectFile({
       root: rootAbsPath,
@@ -274,14 +279,17 @@ _____         _____           ____  _
     if (!selectedPath) {
       throw new Error('failed to select file!')
     }
-  } while (!isFilePath(selectedPath))
-
-  // show selected file's pretty tsc errors information
-  showFileErrs({
-    selectedPath,
-    rootAbsPath,
-    rawAllErrsMap,
-  })
+    if (isFilePath(selectedPath)) {
+      // show selected file's pretty tsc errors information
+      showFileErrs({
+        selectedPath,
+        rootAbsPath,
+        rawAllErrsMap,
+      })
+      selectedPath = rootAbsPath
+    }
+    // eslint-disable-next-line no-constant-condition
+  } while (true)
 } catch (err) {
   console.log(chalk.red(`\n${err}`))
 }
