@@ -10,6 +10,7 @@ import inquirer from 'inquirer'
 import inquirerFileTreeSelection from 'inquirer-file-tree-selection-prompt'
 import jsonc from 'jsonc-parser'
 import { execaCommand } from 'execa'
+import packageJSON from '../package.json' assert { type: 'json' }
 
 inquirer.registerPrompt('file-tree-selection', inquirerFileTreeSelection)
 
@@ -260,11 +261,13 @@ async function selectFile(
 try {
   console.log(
     `\n${chalk.bold.blue(`
-_____         _____           ____  _          
+ _____         _____           ____  _          
 |_   _|__  ___| ____|_ __ _ __|  _ \\(_)_ __ ___ 
   | |/ __|/ __|  _| | '__| '__| | | | | '__/ __|
   | |\\__ \\ (__| |___| |  | |  | |_| | | |  \\__ \\
-  |_||___/\\___|_____|_|  |_|  |____/|_|_|  |___/
+  |_||___/\\___|_____|_|  |_|  |____/|_|_|  |___/  ${chalk.cyanBright(
+    `[version: v${packageJSON.version}]`
+  )}
   `)}`
   )
   const parsedEnvArgs = cli.parse()
