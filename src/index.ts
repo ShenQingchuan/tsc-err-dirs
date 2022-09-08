@@ -157,7 +157,7 @@ async function getTscCompileStdout(
     console.log(
       `\n$ ${chalk.yellowBright(root)}\n  ${chalk.bold.gray(
         `tsc running on ${chalk.bold.blue(targetAbsPath)} ...`
-      )}\n  ${chalk.grey(`> ${cmd}`)}`
+      )}\n  ${chalk.grey(`▷ ${cmd}`)}\n`
     )
     tscSpinner.start()
     const tscProcess = execaCommand(cmd, {
@@ -212,7 +212,7 @@ async function selectFile(
   const { root, targetAbsPath, rawErrsMap } = options
   const errsCountNumLength = String(getRawErrsSumCount(rawErrsMap)).length
 
-  const isUnderProjectRoot =
+  const isOptionPathContained =
     (optionPath: string) => (relativeToRoot: string) => {
       const absPath = path.join(root, relativeToRoot)
       return absPath.includes(optionPath)
@@ -227,12 +227,11 @@ async function selectFile(
     const colorFn = optionPathIsFilePath
       ? chalk.blue
       : chalk.italic.bold.yellowBright
-    const errsCountInPath = [...rawErrsMap.keys()].reduce(
-      (prev, hasErrPath) => {
+    const errsCountInPath = [...rawErrsMap.keys()]
+      .filter(isOptionPathContained(optionPath))
+      .reduce((prev, hasErrPath) => {
         return prev + (rawErrsMap.get(hasErrPath)?.length ?? 0)
-      },
-      0
-    )
+      }, 0)
     return `${chalk.bold.redBright(
       `${String(errsCountInPath).padStart(errsCountNumLength)} errors`
     )} ${colorFn(optionPathLastUnit + (optionPathIsFilePath ? '' : '/'))}`
@@ -248,7 +247,7 @@ async function selectFile(
       onlyShowValid: true,
       validate: (optionPath: string) => {
         const hasErrilesUnderRoot = [...rawErrsMap.keys()].some(
-          isUnderProjectRoot(optionPath)
+          isOptionPathContained(optionPath)
         )
         return hasErrilesUnderRoot
       },
@@ -278,13 +277,13 @@ _____         _____           ____  _
 
   // Generate a map to store errors info
   const rawAllErrsMap = await getRawErrsMap(baseRootAndTarget)
-  let selectedPath = rootAbsPath
-  printTipsForFileChanged()
 
   if (getRawErrsSumCount(rawAllErrsMap) === 0) {
     console.log(`\n🎉 ${chalk.bold.greenBright('Found 0 Errors.')}\n`)
     process.exit()
   }
+  printTipsForFileChanged()
+  let selectedPath = rootAbsPath
   do {
     // Aggregation by file path and make an interactive view to select
     selectedPath = await selectFile({
