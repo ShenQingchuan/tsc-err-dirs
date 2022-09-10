@@ -53,7 +53,7 @@ function getTargetDir(dirArg: string): string {
     throw new Error("You didn't give a directory path")
   }
   const targetDir = dirArg.startsWith('.')
-    ? path.join(__dirname, dirArg)
+    ? path.join(process.cwd(), dirArg)
     : dirArg.startsWith('/')
     ? dirArg
     : (() => {
