@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 import path from 'node:path'
-import url from 'node:url'
 import { readFile, rm, writeFile } from 'node:fs/promises'
 import cac from 'cac'
 import ora from 'ora'
@@ -16,7 +15,6 @@ inquirer.registerPrompt('file-tree-selection', inquirerFileTreeSelection)
 
 const newLineRegExp = /\r?\n/
 const errCodeRegExp = /error TS(?<errCode>\d+)/
-const __dirname = url.fileURLToPath(new URL('.', import.meta.url))
 const cli = cac('tsc-err-dirs')
 const tscSpinner = ora(chalk.yellow('Start tsc compiling ...'))
 
@@ -53,7 +51,7 @@ function getTargetDir(dirArg: string): string {
     throw new Error("You didn't give a directory path")
   }
   const targetDir = dirArg.startsWith('.')
-    ? path.join(__dirname, dirArg)
+    ? path.join(process.cwd(), dirArg)
     : dirArg.startsWith('/')
     ? dirArg
     : (() => {
