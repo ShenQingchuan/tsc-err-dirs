@@ -36,14 +36,18 @@
     "prepublishOnly": "pnpm run build"
   },
   "dependencies": {
+    "bin-version": "^6.0.0",
     "cac": "^6.7.14",
     "chalk": "^5.0.1",
+    "chokidar": "^3.5.3",
     "execa": "^6.1.0",
     "inquirer": "^9.1.1",
     "inquirer-file-tree-selection-prompt": "^2.0.4",
     "jsonc-parser": "^3.2.0",
     "lodash": "^4.17.21",
-    "ora": "^6.1.2"
+    "ora": "^6.1.2",
+    "semver": "^7.3.7",
+    "semver-truncate": "^3.0.0"
   },
   "devDependencies": {
     "@sxzz/eslint-config-prettier": "^2.4.1",
@@ -51,6 +55,7 @@
     "@types/inquirer": "^9.0.1",
     "@types/lodash": "^4.14.184",
     "@types/node": "*",
+    "@types/semver": "^7.3.12",
     "bumpp": "^8.2.1",
     "eslint": "^8.23.0",
     "eslint-define-config": "^1.6.0",
