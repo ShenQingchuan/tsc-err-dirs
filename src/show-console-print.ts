@@ -1,7 +1,9 @@
 import chalk from 'chalk'
 import packageJSON from '../package.json'
+import type { CAC } from 'cac'
 
-export function showAppHeader() {
+export function showAppHeader(cli: CAC) {
+  const version = packageJSON.version
   console.log(
     `\n${chalk.bold.blue(`
  _____         _____           ____  _          
@@ -13,6 +15,7 @@ export function showAppHeader() {
   )}
   `)}`
   )
+  cli.version(version)
 }
 export function showFirstTscCompilePathInfo({
   cmd,

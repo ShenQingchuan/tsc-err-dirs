@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-
 import path from 'node:path'
 import chokidar from 'chokidar'
 import cac from 'cac'
@@ -94,12 +93,19 @@ function showSelectFilePrompt(ctx: Context) {
   })
   return prompt
 }
+function guardErrsMapNotEmpty(rawErrsMap: RawErrsMap) {
+  const errsCount = getRawErrsSumCount(rawErrsMap)
+  if (errsCount === 0) {
+    console.log(`\n🎉 ${chalk.bold.greenBright('Found 0 Errors.')}\n`)
+    process.exit()
+  }
+}
 
 try {
   await ensureTscVersion()
-  showAppHeader()
-
   const cli = cac('tsc-err-dirs')
+  showAppHeader(cli)
+
   const parsedEnvArgs = cli.parse()
   const rootDirArg = parsedEnvArgs.args[0]
   const rootAbsPath = getTargetDir(rootDirArg)
@@ -108,11 +114,8 @@ try {
   }
 
   // Generate a map to store errors info
-  const rawErrsMap = await getRawErrsMapFromTsCompile(rootAbsPath)
-  if (getRawErrsSumCount(rawErrsMap) === 0) {
-    console.log(`\n🎉 ${chalk.bold.greenBright('Found 0 Errors.')}\n`)
-    process.exit()
-  }
+  const _initRawErrsMap = await getRawErrsMapFromTsCompile(rootAbsPath)
+  guardErrsMapNotEmpty(_initRawErrsMap)
 
   // Watch the `rootAbsPath` for any changes
   const rootWatcher = await new Promise<chokidar.FSWatcher>((resolve) => {
@@ -132,7 +135,7 @@ try {
   const ctx = {
     root: rootAbsPath,
     targetAbsPath: rootAbsPath,
-    rawErrsMap,
+    rawErrsMap: _initRawErrsMap,
   }
   // Bind watcher to the selector view
   const selectFile = async (ctx: Context) => {
@@ -172,6 +175,7 @@ try {
         console.log(error.message)
         ctx.rawErrsMap.clear()
         ctx.rawErrsMap = await getRawErrsMapFromTsCompile(rootAbsPath, true)
+        guardErrsMapNotEmpty(ctx.rawErrsMap)
         continue
       }
     }
