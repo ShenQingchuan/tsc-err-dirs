@@ -2,6 +2,10 @@
 
 Display tsc errors count on file tree.
 
+## Screeshot
+
+<image src="https://user-images.githubusercontent.com/46062972/189839240-7dea5b1f-eb0b-41cc-b65f-5ea96f4cde4b.png" width="500" />
+
 ## Requirement
 
 - node version: >=16
