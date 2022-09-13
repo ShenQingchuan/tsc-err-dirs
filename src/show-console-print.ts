@@ -16,23 +16,21 @@ export function showAppHeader() {
 }
 export function showFirstTscCompilePathInfo({
   cmd,
-  root,
-  targetAbsPath,
+  rootAbsPath,
 }: {
   cmd: string
-  root: string
-  targetAbsPath: string
+  rootAbsPath: string
 }) {
   console.log(
-    `\n$ ${chalk.yellowBright(root)}\n  ${chalk.bold.gray(
-      `tsc running on ${chalk.bold.blue(targetAbsPath)} ...`
+    `\n$ ${chalk.yellowBright(rootAbsPath)}\n  ${chalk.bold.gray(
+      `tsc running for the first time ...`
     )}\n ${chalk.green('▷')} ${chalk.grey(` ${cmd}`)}\n`
   )
 }
-export function showTscReCompilePathInfo(targetAbsPath: string) {
+export function showTscReCompilePathInfo(rootAbsPath: string) {
   console.log(
     `${chalk.bold.gray(
-      `Start re-run tsc on ${chalk.bold.blue(targetAbsPath)} ...`
+      `Start re-run tsc on ${chalk.bold.blue(rootAbsPath)} ...`
     )}\n`
   )
 }

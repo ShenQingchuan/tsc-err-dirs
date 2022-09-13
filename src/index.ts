@@ -9,7 +9,7 @@ import inquirerFileTreeSelection from 'inquirer-file-tree-selection-prompt'
 import ensureTscVersion from './check-tsc-version'
 import { showAppHeader } from './show-console-print'
 import { getRawErrsSumCount, getTargetDir, isFilePath } from './utils'
-import { getRawErrsMap } from './ts-errs-map'
+import { getRawErrsMapFromTsCompile } from './ts-errs-map'
 import type { Context, RawErrsMap } from './types'
 
 inquirer.registerPrompt('file-tree-selection', inquirerFileTreeSelection)
@@ -106,13 +106,9 @@ try {
   if (isFilePath(rootAbsPath)) {
     throw new Error("Can't run tsc-err-dirs on single file.")
   }
-  const baseRootAndTarget = {
-    root: rootAbsPath,
-    targetAbsPath: rootAbsPath,
-  }
 
   // Generate a map to store errors info
-  const rawErrsMap = await getRawErrsMap(baseRootAndTarget)
+  const rawErrsMap = await getRawErrsMapFromTsCompile(rootAbsPath)
   if (getRawErrsSumCount(rawErrsMap) === 0) {
     console.log(`\n🎉 ${chalk.bold.greenBright('Found 0 Errors.')}\n`)
     process.exit()
@@ -149,7 +145,6 @@ try {
         const fileChangedMsg = `\n${chalk.blue(
           `[WATCH] ${chalk.white(changedPath)} has changed ...`
         )}`
-        console.log(fileChangedMsg)
         rejectSelectFile(
           new Error(fileChangedMsg) // throw out message for chokidar change event
         )
@@ -171,11 +166,14 @@ try {
         ...ctx,
         targetAbsPath: selectedPath,
       })
-    } catch {
+    } catch (error) {
       // Re-generate a map to store errors info
-      ctx.rawErrsMap.clear()
-      ctx.rawErrsMap = await getRawErrsMap(baseRootAndTarget, true)
-      continue
+      if (error instanceof Error) {
+        console.log(error.message)
+        ctx.rawErrsMap.clear()
+        ctx.rawErrsMap = await getRawErrsMapFromTsCompile(rootAbsPath, true)
+        continue
+      }
     }
     if (!selectedPath) {
       throw new Error('failed to select file!')
@@ -185,7 +183,7 @@ try {
       showFileErrs({
         selectedPath,
         rootAbsPath,
-        rawErrsMap,
+        rawErrsMap: ctx.rawErrsMap,
       })
       selectedPath = rootAbsPath
     }

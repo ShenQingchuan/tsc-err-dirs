@@ -9,64 +9,91 @@ import {
   showFirstTscCompilePathInfo,
   showTscReCompilePathInfo,
 } from './show-console-print'
-import type { RawErrsMap, RootAndTarget, TscErrorInfo } from './types'
+import { getLineByIndexFromFile } from './utils'
+import type { RawErrsMap, TscErrorInfo } from './types'
 
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url))
 const newLineRegExp = /\r?\n/
 const errCodeRegExp = /error TS(?<errCode>\d+)/
 const tscSpinner = ora(chalk.yellow('Start tsc compiling ...'))
 
-function makeTscErrorInfo(errInfo: string): [string, TscErrorInfo] {
+async function getErrPreviewLineByIndexFromFile(
+  filePath: string,
+  line: number,
+  errMsg: string
+) {
+  // line index is zero-based, so we need to minus 1
+  const lineContent = await getLineByIndexFromFile(filePath, line - 1)
+  return `${errMsg}
+${chalk.yellow(`${String(line)} ┆`)}${lineContent}`
+}
+
+async function makeTscErrorInfo(
+  errInfo: string,
+  rootAbsPath: string
+): Promise<[string, TscErrorInfo]> {
   const panicMsg = 'failed to parsing error info.'
   const [errFilePathPos = '', ...errMsgRawArr] = errInfo.split(':')
   if (
     !errFilePathPos ||
     errMsgRawArr.length === 0 ||
     errMsgRawArr.join('').length === 0
-  )
+  ) {
     throw new Error(`${panicMsg} (on first split)`)
+  }
   const errMsgRaw = errMsgRawArr.join('').trim()
 
   // get filePath, line, col
   const [errFilePath, errPos] = errFilePathPos
     .slice(0, -1) // removes the ')'
     .split('(')
-  if (!errFilePath || !errPos)
+  if (!errFilePath || !errPos) {
     throw new Error(`${panicMsg} (on \`errFilePath\` or \`errPos\`)`)
+  }
 
   const [errLine, errCol] = errPos.split(',')
-  if (!errLine || !errCol)
+  if (!errLine || !errCol) {
     throw new Error(`${panicMsg} (on \`errLine\` or \`errCol\`)`)
+  }
 
   // get errCode, errMsg
   const execArr = errCodeRegExp.exec(errMsgRaw)
-  if (!execArr) throw new Error(`${panicMsg} (on \`errMsgRegExp.exec\`)`)
+  if (!execArr) {
+    throw new Error(`${panicMsg} (on \`errMsgRegExp.exec\`)`)
+  }
 
-  const { errCode = '' } = execArr.groups ?? {}
-  if (!errCode) throw new Error(`${panicMsg} (on \`errCode\`)`)
+  const errCodeStr = execArr.groups?.errCode ?? ''
+  if (!errCodeStr) {
+    throw new Error(`${panicMsg} (on \`errCode\`)`)
+  }
 
+  const line = Number(errLine),
+    col = Number(errCol),
+    errCode = Number(errCodeStr)
+  const errMsg = await getErrPreviewLineByIndexFromFile(
+    path.join(rootAbsPath, errFilePath),
+    line,
+    errMsgRaw.slice(`error TS${errCode}`.length)
+  )
   return [
     errFilePath,
     {
       filePath: errFilePath,
-      line: Number(errLine),
-      col: Number(errCol),
-      errCode: Number(errCode),
-      errMsg: errMsgRaw.slice(`error TS${errCode}`.length - 1),
+      errCode,
+      line,
+      col,
+      errMsg,
     },
   ]
 }
 export async function getTscCompileStdout(
   // The `cwd` dir requires an existing `tsconfig.json` file
-  options: RootAndTarget & {
-    pretty?: boolean
-  },
+  rootAbsPath = process.cwd(),
   isReCompile = false
 ) {
-  const { root = process.cwd(), pretty = false, targetAbsPath = root } = options
-  const baseConfigPath = path.join(root, 'tsconfig.json')
+  const baseConfigPath = path.join(rootAbsPath, 'tsconfig.json')
   const baseConfigJSON = jsonc.parse(String(await readFile(baseConfigPath)))
-  const tmpConfigPath = path.join(root, 'tsconfig.tmp.json')
+  const tmpConfigPath = path.join(rootAbsPath, 'tsconfig.tmp.json')
 
   // Use a temp tsconfig
   try {
@@ -91,17 +118,16 @@ export async function getTscCompileStdout(
 
   let tscErrorStdout = ''
   try {
-    const cmd = `tsc --noEmit --pretty ${pretty} -p ${tmpConfigPath}`
+    const cmd = `tsc --noEmit --pretty false -p ${tmpConfigPath}`
     isReCompile
-      ? showTscReCompilePathInfo(targetAbsPath)
+      ? showTscReCompilePathInfo(rootAbsPath)
       : showFirstTscCompilePathInfo({
           cmd,
-          root,
-          targetAbsPath,
+          rootAbsPath,
         })
     tscSpinner.start()
     const tscProcess = execaCommand(cmd, {
-      cwd: root,
+      cwd: rootAbsPath,
       stdout: 'pipe',
       reject: false,
     })
@@ -117,33 +143,35 @@ export async function getTscCompileStdout(
   }
   return tscErrorStdout
 }
-export async function getRawErrsMap(
-  options: RootAndTarget,
+export async function getRawErrsMapFromTsCompile(
+  rootAbsPath: string,
   isReCompile = false
 ) {
-  const tscErrorStdout = await getTscCompileStdout(options, isReCompile)
+  const tscErrorStdout = await getTscCompileStdout(rootAbsPath, isReCompile)
   const rawErrsMap: RawErrsMap = new Map()
 
   // Merge details line with main line (i.e. which contains file path)
-  tscErrorStdout
-    .split(newLineRegExp)
-    .reduce<string[]>((prev, next) => {
-      if (!next) {
+  const infos = await Promise.all(
+    tscErrorStdout
+      .split(newLineRegExp)
+      .reduce<string[]>((prev, next) => {
+        if (!next) {
+          return prev
+        } else if (!next.startsWith(' ')) {
+          prev.push(next)
+        } else {
+          prev[prev.length - 1] += `\n${next}`
+        }
         return prev
-      } else if (!next.startsWith(' ')) {
-        prev.push(next)
-      } else {
-        prev[prev.length - 1] += `\n${next}`
-      }
-      return prev
-    }, [])
-    .map((errInfoLine) => makeTscErrorInfo(errInfoLine))
-    .forEach(([errFilePath, errInfo]) => {
-      if (!rawErrsMap.has(errFilePath)) {
-        rawErrsMap.set(errFilePath, [errInfo])
-      } else {
-        rawErrsMap.get(errFilePath)?.push(errInfo)
-      }
-    })
+      }, [])
+      .map((errInfoLine) => makeTscErrorInfo(errInfoLine, rootAbsPath))
+  )
+  infos.forEach(([errFilePath, errInfo]) => {
+    if (!rawErrsMap.has(errFilePath)) {
+      rawErrsMap.set(errFilePath, [errInfo])
+    } else {
+      rawErrsMap.get(errFilePath)?.push(errInfo)
+    }
+  })
   return rawErrsMap
 }
