@@ -32,27 +32,39 @@ function createOutOfRangeError(filePath: string, lineIndex: number) {
   )
 }
 
-export function getLineByIndexFromFile(filePath: string, lineIndex: number) {
-  return new Promise<string>((resolve, reject) => {
-    if (lineIndex < 0 || lineIndex % 1 !== 0)
+export function getLineByIndexesFromFile(
+  filePath: string,
+  lineIndexes: number[]
+) {
+  return new Promise<string[]>((resolve, reject) => {
+    if (lineIndexes.some((lineIndex) => lineIndex < 0 || lineIndex % 1 !== 0))
       return reject(new RangeError(`Invalid line number`))
 
     let cursor = 0
     const input = fs.createReadStream(filePath)
     const rl = readline.createInterface({ input })
-
+    const linesCollect: string[] = []
     rl.on('line', (line) => {
-      if (cursor++ === lineIndex) {
+      if (cursor === Math.max(...lineIndexes)) {
+        // the last index
         rl.close()
         input.close()
-        resolve(line)
+        resolve([...linesCollect, line])
+      } else if (lineIndexes.includes(cursor)) {
+        linesCollect.push(line)
       }
+      cursor++
     })
 
     rl.on('error', reject)
 
     input.on('end', () => {
-      reject(createOutOfRangeError(filePath, lineIndex))
+      reject(
+        createOutOfRangeError(
+          filePath,
+          lineIndexes[Math.floor(lineIndexes.length / 2)]
+        )
+      )
     })
   })
 }

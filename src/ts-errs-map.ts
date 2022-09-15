@@ -9,7 +9,7 @@ import {
   showFirstTscCompilePathInfo,
   showTscReCompilePathInfo,
 } from './show-console-print'
-import { getLineByIndexFromFile } from './utils'
+import { getLineByIndexesFromFile } from './utils'
 import type { RawErrsMap, TscErrorInfo } from './types'
 
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url))
@@ -23,9 +23,15 @@ async function getErrPreviewLineByIndexFromFile(
   errMsg: string
 ) {
   // line index is zero-based, so we need to minus 1
-  const lineContent = await getLineByIndexFromFile(filePath, line - 1)
+  const [prevLine, lineContent, nextLine] = await getLineByIndexesFromFile(
+    filePath,
+    [line - 1 - 1, line - 1, line - 1 + 1]
+  )
   return `${errMsg}
-${chalk.yellow(`${String(line)} ┆`)}${lineContent}`
+
+${chalk.gray(`${String(line)} ┆`)}${prevLine}
+${chalk.bold.red(`${String(line)} ┆`)}${chalk.bold.underline(lineContent)}
+${chalk.gray(`${String(line)} ┆`)}${nextLine}`
 }
 
 async function makeTscErrorInfo(
