@@ -70,7 +70,9 @@ function createOptionPathTransformer({
       }, 0)
     return `${chalk.bold.redBright(
       `${String(errsCountInPath).padStart(errsCountNumLength)} errors`
-    )} ${colorFn(optionPathLastUnit + (optionPathIsFilePath ? '' : '/'))}`
+    )} ${colorFn(
+      `${optionPathIsFilePath ? '\uF0F6' : '\uF413'} ${optionPathLastUnit}`
+    )}`
   }
 }
 function showSelectFilePrompt(ctx: Context) {
