@@ -29,9 +29,9 @@ async function getErrPreviewLineByIndexFromFile(
   )
   return `${errMsg}
 
-${chalk.gray(`${String(line)} ┆`)}${prevLine}
+${chalk.gray(`${String(line - 1)} ┆`)}${prevLine}
 ${chalk.bold.red(`${String(line)} ┆`)}${chalk.bold.underline(lineContent)}
-${chalk.gray(`${String(line)} ┆`)}${nextLine}`
+${chalk.gray(`${String(line + 1)} ┆`)}${nextLine}`
 }
 
 async function makeTscErrorInfo(
