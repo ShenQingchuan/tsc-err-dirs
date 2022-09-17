@@ -1,6 +1,8 @@
 # tsc-err-dirs [![npm](https://img.shields.io/npm/v/@slackoff/tsc-err-dirs.svg)](https://npmjs.com/package/@slackoff/tsc-err-dirs)
 
-Display tsc errors count on file tree.
+[中文文档](./README-CN.md)
+
+Display tsc errors count on file tree, can hot update when you change those files.
 
 ## Screeshot
 
@@ -12,7 +14,7 @@ Display tsc errors count on file tree.
 - tsc version: >=4.5.5
 - Installed [Nerd Font](https://github.com/ryanoasis/nerd-fonts)
 
-> Warning: We only recommend you to use this CLI app in Mac OS or Linux, 
+> Warning: We recommend you to use this CLI app in Mac OS or Linux, 
   since it's using a lot of shell features which may not have good support in Windows.
 
 ## Install
@@ -24,8 +26,18 @@ npm i -g @slackoff/tsc-err-dirs
 ## Usage
 
 ```bash
-tsc-err-dirs <path-to-your-project-root> # the project root path MUST contains `tsconfig.json`
+# the project root path MUST contains `tsconfig.json`
+tsc-err-dirs <path-to-your-project-root>
 ```
+
+## Internal
+
+Since `tsc` doesn't provide a way to get the errors count of each file, we have to use a trick to get it.
+
+1. Use `tsc --noEmit --pretty false` to get all the errors of each file which are not prettified format.
+2. Extract stdout and parse it to get the errors info of each file.
+3. Use [inquirer-file-tree-selection-prompt](https://www.npmjs.com/package/inquirer-file-tree-selection-prompt) to display the errors count on file tree.
+
 
 ## License
 
