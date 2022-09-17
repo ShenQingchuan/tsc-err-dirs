@@ -28,7 +28,7 @@ export function isFilePath(absPath: string) {
 
 function createOutOfRangeError(filePath: string, lineIndex: number) {
   return new RangeError(
-    `Line with index ${lineIndex} does not exist in '${filePath}'. Note that line indexing is zero-based`
+    `Line with index ${lineIndex} does not exist in '${filePath}'.`
   )
 }
 
@@ -37,14 +37,15 @@ export function getLineByIndexesFromFile(
   lineIndexes: number[]
 ) {
   return new Promise<string[]>((resolve, reject) => {
-    if (lineIndexes.some((lineIndex) => lineIndex < 0 || lineIndex % 1 !== 0))
+    if (lineIndexes.some((lineIndex) => lineIndex <= 0 || lineIndex % 1 !== 0))
       return reject(new RangeError(`Invalid line number`))
 
-    let cursor = 0
+    let cursor = 1
     const input = fs.createReadStream(filePath)
     const rl = readline.createInterface({ input })
     const linesCollect: string[] = []
-    rl.on('line', (line) => {
+
+    function read(line: string) {
       if (cursor === Math.max(...lineIndexes)) {
         // the last index
         rl.close()
@@ -54,11 +55,13 @@ export function getLineByIndexesFromFile(
         linesCollect.push(line)
       }
       cursor++
-    })
+    }
 
+    rl.on('line', (line) => read(line))
     rl.on('error', reject)
 
     input.on('end', () => {
+      read('')
       reject(
         createOutOfRangeError(
           filePath,
