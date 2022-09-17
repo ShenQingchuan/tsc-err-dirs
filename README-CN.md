@@ -12,7 +12,8 @@
 - tsc 版本: >=4.5.5
 - 安装 [Nerd Font](https://github.com/ryanoasis/nerd-fonts)
 
-> 警告：推荐在 Mac OS 或 Linux 下使用该 CLI 应用，在 Windows 的 shell 中可能有诸多限制导致效果无法实现。
+> **Warning**  
+> 推荐在 Mac OS 或 Linux 下使用该 CLI 应用，在 Windows 的 shell 中可能有诸多限制导致效果无法实现。
 
 ## 安装
 
