@@ -14,7 +14,7 @@ Display tsc errors count on file tree, can hot update when you change those file
 - tsc version: >=4.5.5
 - Installed [Nerd Font](https://github.com/ryanoasis/nerd-fonts)
 
-> Warning: We recommend you to use this CLI app in Mac OS or Linux, 
+> **Warning**: We recommend you to use this CLI app in Mac OS or Linux, 
   since it's using a lot of shell features which may not have good support in Windows.
 
 ## Install

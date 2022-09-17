@@ -3,6 +3,7 @@
   "version": "0.0.12",
   "packageManager": "pnpm@7.9.5",
   "description": "Show tsc errors by directories.",
+  "type": "module",
   "license": "MIT",
   "repository": {
     "type": "Git",
@@ -31,6 +32,7 @@
     "lint": "eslint . --ext .vue,.js,.ts,.jsx,.tsx,.json,.md",
     "lint:fix": "pnpm run lint --fix",
     "build": "tsup",
+    "dev": "tsx ./src/index.ts",
     "test": "vitest",
     "release": "bumpp && pnpm publish",
     "prepublishOnly": "pnpm run build"
