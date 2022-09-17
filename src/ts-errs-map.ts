@@ -25,7 +25,7 @@ async function getErrPreviewLineByIndexFromFile(
   // line index is zero-based, so we need to minus 1
   const [prevLine, lineContent, nextLine] = await getLineByIndexesFromFile(
     filePath,
-    [line - 1 - 1, line - 1, line - 1 + 1]
+    [line - 1, line, line + 1]
   )
   return `${errMsg}
 
