@@ -23,7 +23,7 @@
     "import": "./dist/index.js"
   },
   "bin": {
-    "tsc-err-dirs": "./dist/index.mjs"
+    "tsc-err-dirs": "./dist/index.js"
   },
   "publishConfig": {
     "access": "public"
