@@ -106,7 +106,7 @@ function guardErrsMapNotEmpty(rawErrsMap: RawErrsMap) {
 try {
   await ensureTscVersion()
   const cli = cac('tsc-err-dirs')
-  showAppHeader(cli)
+  showAppHeader()
 
   const parsedEnvArgs = cli.parse()
   const rootDirArg = parsedEnvArgs.args[0]
