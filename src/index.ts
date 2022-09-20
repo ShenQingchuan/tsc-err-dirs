@@ -4,6 +4,7 @@ import chokidar from 'chokidar'
 import cac from 'cac'
 import chalk from 'chalk'
 import inquirer from 'inquirer'
+import { last } from 'lodash'
 import inquirerFileTreeSelection from '../lib/inquirer-file-tree-selection-prompt'
 import ensureTscVersion from './check-tsc-version'
 import { showAppHeader } from './show-console-print'
@@ -44,7 +45,10 @@ function isOptionPathContained({
 }) {
   return (relativeToRoot: string) => {
     const absPath = path.join(root, relativeToRoot)
-    return absPath.includes(optionPath)
+    // Avoid last path unit is optionPath's sub-string
+    const lastOfAbsPath = last(absPath.split(path.sep))
+    const lastOfOptionPath = last(optionPath.split(path.sep))
+    return absPath.includes(optionPath) && lastOfAbsPath === lastOfOptionPath
   }
 }
 function createOptionPathTransformer({
