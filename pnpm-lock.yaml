@@ -12,17 +12,19 @@ specifiers:
   cac: ^6.7.14
   chalk: ^5.0.1
   chokidar: ^3.5.3
+  cli-cursor: ^4.0.0
   eslint: ^8.23.0
   eslint-define-config: ^1.6.0
   execa: ^6.1.0
   fast-glob: ^3.2.11
+  figures: ^5.0.0
   inquirer: ^9.1.1
-  inquirer-file-tree-selection-prompt: ^2.0.4
   jsonc-parser: ^3.2.0
   lodash: ^4.17.21
   node-fetch: ^3.2.10
   ora: ^6.1.2
   prettier: ^2.7.1
+  rxjs: ^7.5.6
   semver: ^7.3.7
   semver-truncate: ^3.0.0
   tsup: ^6.2.3
@@ -35,13 +37,15 @@ dependencies:
   cac: 6.7.14
   chalk: 5.0.1
   chokidar: 3.5.3
+  cli-cursor: 4.0.0
   execa: 6.1.0
+  figures: 5.0.0
   inquirer: 9.1.1
-  inquirer-file-tree-selection-prompt: 2.0.4_inquirer@9.1.1
   jsonc-parser: 3.2.0
   lodash: 4.17.21
   node-fetch: 3.2.10
   ora: 6.1.2
+  rxjs: 7.5.6
   semver: 7.3.7
   semver-truncate: 3.0.0
 
@@ -1751,14 +1755,6 @@ packages:
       web-streams-polyfill: 3.2.1
     dev: false
 
-  /figures/4.0.1:
-    resolution: {integrity: sha512-rElJwkA/xS04Vfg+CaZodpso7VqBknOYbzi6I76hI4X80RUjkSxO2oAyPmGbuXUppywjqndOrQDl817hDnI++w==}
-    engines: {node: '>=12'}
-    dependencies:
-      escape-string-regexp: 5.0.0
-      is-unicode-supported: 1.2.0
-    dev: false
-
   /figures/5.0.0:
     resolution: {integrity: sha512-ej8ksPF4x6e5wvK9yevct0UCXh8TTFlWGVLlgjZuoBH1HwjIfKE/IdL5mq89sFA7zELi1VhKpmtDnrs7zWyeyg==}
     engines: {node: '>=14'}
@@ -2052,20 +2048,6 @@ packages:
 
   /inherits/2.0.4:
     resolution: {integrity: sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==}
-
-  /inquirer-file-tree-selection-prompt/2.0.4_inquirer@9.1.1:
-    resolution: {integrity: sha512-jz1/FzA9+FknNGibS8QX7ewq+1Xvy+iVqSj6lUz9CSo0F9ysvIcwWPyCCFvcIiGGeTLt7RQIJOLrHwbNq3saVQ==}
-    engines: {node: '>=14.16'}
-    peerDependencies:
-      inquirer: ^9.0.0
-    dependencies:
-      chalk: 5.0.1
-      cli-cursor: 4.0.0
-      figures: 4.0.1
-      inquirer: 9.1.1
-      lodash: 4.17.21
-      rxjs: 7.5.6
-    dev: false
 
   /inquirer/9.1.1:
     resolution: {integrity: sha512-hfS9EJ1pVkGNbYKqzdGwMj0Dqosd36Qvxd5pFy4657QT23gmtFTSqoYBisZR75DReeSMWPNa8J0Lf6TQCz8PvA==}

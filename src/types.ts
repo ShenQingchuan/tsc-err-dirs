@@ -12,4 +12,6 @@ export interface RootAndTarget {
 }
 export type Context = RootAndTarget & {
   rawErrsMap: RawErrsMap
+  openedDirs: Set<string>
+  lastActivePath?: string
 }

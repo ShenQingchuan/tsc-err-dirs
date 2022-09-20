@@ -4,7 +4,7 @@ import chokidar from 'chokidar'
 import cac from 'cac'
 import chalk from 'chalk'
 import inquirer from 'inquirer'
-import inquirerFileTreeSelection from 'inquirer-file-tree-selection-prompt'
+import inquirerFileTreeSelection from '../lib/inquirer-file-tree-selection-prompt'
 import ensureTscVersion from './check-tsc-version'
 import { showAppHeader } from './show-console-print'
 import { getRawErrsSumCount, getTargetDir, isFilePath } from './utils'
@@ -76,7 +76,7 @@ function createOptionPathTransformer({
   }
 }
 function showSelectFilePrompt(ctx: Context) {
-  const { root, targetAbsPath, rawErrsMap } = ctx
+  const { root, targetAbsPath, rawErrsMap, openedDirs } = ctx
   const prompt = inquirer.prompt({
     type: 'file-tree-selection',
     name: 'file',
@@ -92,6 +92,15 @@ function showSelectFilePrompt(ctx: Context) {
       return hasErrilesUnderRoot
     },
     transformer: createOptionPathTransformer(ctx),
+    openedDirs: [...openedDirs],
+    default: ctx.lastActivePath,
+    onDirAction: (path, actionType) => {
+      if (actionType === 'open') {
+        ctx.openedDirs.add(path)
+      } else {
+        ctx.openedDirs.delete(path)
+      }
+    },
   })
   return prompt
 }
@@ -125,6 +134,7 @@ try {
     const _watcher = chokidar
       .watch(watchTarget, {
         awaitWriteFinish: true,
+        ignored: ['node_modules'],
       })
       .on('ready', () => {
         console.log(
@@ -134,10 +144,11 @@ try {
       })
   })
 
-  const ctx = {
+  const ctx: Context = {
     root: rootAbsPath,
     targetAbsPath: rootAbsPath,
     rawErrsMap: _initRawErrsMap,
+    openedDirs: new Set<string>(),
   }
   // Bind watcher to the selector view
   const selectFile = async (ctx: Context) => {
@@ -184,6 +195,7 @@ try {
     if (!selectedPath) {
       throw new Error('failed to select file!')
     }
+    ctx.lastActivePath = selectedPath
     if (isFilePath(selectedPath)) {
       // show selected file's pretty tsc errors information
       showFileErrs({
@@ -192,6 +204,8 @@ try {
         rawErrsMap: ctx.rawErrsMap,
       })
       selectedPath = rootAbsPath
+    } else {
+      ctx.openedDirs.add(selectedPath)
     }
     // eslint-disable-next-line no-constant-condition
   } while (true)
