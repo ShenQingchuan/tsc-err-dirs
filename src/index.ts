@@ -4,7 +4,6 @@ import chokidar from 'chokidar'
 import cac from 'cac'
 import chalk from 'chalk'
 import inquirer from 'inquirer'
-import { last } from 'lodash-es'
 import inquirerFileTreeSelection from '../lib/inquirer-file-tree-selection-prompt'
 import ensureTscVersion from './check-tsc-version'
 import { showAppHeader } from './show-console-print'
@@ -45,10 +44,9 @@ function isOptionPathContained({
 }) {
   return (relativeToRoot: string) => {
     const absPath = path.join(root, relativeToRoot)
-    // Avoid last path unit is optionPath's sub-string
-    const lastOfAbsPath = last(absPath.split(path.sep))
-    const lastOfOptionPath = last(optionPath.split(path.sep))
-    return absPath.includes(optionPath) && lastOfAbsPath === lastOfOptionPath
+    // Appending '/' is aimed to avoid last path unit of a directory is optionPath's sub-string
+    const isAbsPathIncludeOptionPath = absPath.includes(`${optionPath}/`)
+    return isAbsPathIncludeOptionPath
   }
 }
 function createOptionPathTransformer({
@@ -90,10 +88,10 @@ function showSelectFilePrompt(ctx: Context) {
     // Maybe some tsc errors are out of this root
     onlyShowValid: true,
     validate: (optionPath: string) => {
-      const hasErrilesUnderRoot = [...rawErrsMap.keys()].some(
+      const hasErrFilesUnderRoot = [...rawErrsMap.keys()].some(
         isOptionPathContained({ root, optionPath })
       )
-      return hasErrilesUnderRoot
+      return hasErrFilesUnderRoot
     },
     transformer: createOptionPathTransformer(ctx),
     openedDirs: [...openedDirs],

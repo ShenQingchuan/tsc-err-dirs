@@ -1,7 +1,7 @@
 import path from 'node:path'
 import readline from 'node:readline'
 import fs from 'node:fs'
-import type { RawErrsMap } from './types'
+import type { CollectLineNumbers, CollectLines, RawErrsMap } from './types'
 
 export function getRawErrsSumCount(rawErrsMap: RawErrsMap) {
   return [...rawErrsMap.values()].reduce((prev, next) => {
@@ -34,25 +34,32 @@ function createOutOfRangeError(filePath: string, lineIndex: number) {
 
 export function getLineByIndexesFromFile(
   filePath: string,
-  lineIndexes: number[]
-) {
-  return new Promise<string[]>((resolve, reject) => {
-    if (lineIndexes.some((lineIndex) => lineIndex <= 0 || lineIndex % 1 !== 0))
+  lineIndexes: CollectLineNumbers
+): Promise<CollectLines> {
+  const linesCollect: Partial<CollectLines> = {}
+  return new Promise<CollectLines>((resolve, reject) => {
+    if (
+      Object.values(lineIndexes).some(
+        (lineIndex) => lineIndex <= 0 || lineIndex % 1 !== 0
+      )
+    )
       return reject(new RangeError(`Invalid line number`))
 
     let cursor = 1
     const input = fs.createReadStream(filePath)
     const rl = readline.createInterface({ input })
-    const linesCollect: string[] = []
 
     function read(line: string) {
-      if (cursor === Math.max(...lineIndexes)) {
+      if (cursor === lineIndexes.next) {
         // the last index
         rl.close()
         input.close()
-        resolve([...linesCollect, line])
-      } else if (lineIndexes.includes(cursor)) {
-        linesCollect.push(line)
+        linesCollect.next = line
+        resolve(linesCollect as CollectLines)
+      } else if (cursor === lineIndexes.target) {
+        linesCollect.target = line
+      } else if (cursor === lineIndexes.prev) {
+        linesCollect.prev = line
       }
       cursor++
     }
@@ -62,12 +69,7 @@ export function getLineByIndexesFromFile(
 
     input.on('end', () => {
       read('')
-      reject(
-        createOutOfRangeError(
-          filePath,
-          lineIndexes[Math.floor(lineIndexes.length / 2)]
-        )
-      )
+      reject(createOutOfRangeError(filePath, lineIndexes.target))
     })
   })
 }

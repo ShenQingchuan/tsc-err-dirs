@@ -6,6 +6,14 @@ export interface TscErrorInfo {
   line: number
   col: number
 }
+export interface CollectLineNumbers {
+  target: number
+  next: number
+  prev?: number
+}
+export type CollectLines = {
+  [key in keyof CollectLineNumbers]: string
+}
 export interface RootAndTarget {
   root: string
   targetAbsPath: string
