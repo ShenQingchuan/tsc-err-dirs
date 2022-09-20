@@ -38,14 +38,18 @@ ${chalk.blue(`error TS${errInfo.errCode}`)}: ${errInfo.errMsg}
 function isOptionPathContained({
   root,
   optionPath,
+  needSepSuffix = false,
 }: {
   root: string
   optionPath: string
+  needSepSuffix?: boolean
 }) {
   return (relativeToRoot: string) => {
     const absPath = path.join(root, relativeToRoot)
     // Appending '/' is aimed to avoid last path unit of a directory is optionPath's sub-string
-    const isAbsPathIncludeOptionPath = absPath.includes(`${optionPath}/`)
+    const isAbsPathIncludeOptionPath = absPath.startsWith(
+      `${optionPath}${needSepSuffix && !isFilePath(optionPath) ? path.sep : ''}`
+    )
     return isAbsPathIncludeOptionPath
   }
 }
@@ -66,7 +70,7 @@ function createOptionPathTransformer({
       ? chalk.blue
       : chalk.italic.bold.yellowBright
     const errsCountInPath = [...rawErrsMap.keys()]
-      .filter(isOptionPathContained({ root, optionPath }))
+      .filter(isOptionPathContained({ root, optionPath, needSepSuffix: true }))
       .reduce((prev, hasErrPath) => {
         return prev + (rawErrsMap.get(hasErrPath)?.length ?? 0)
       }, 0)

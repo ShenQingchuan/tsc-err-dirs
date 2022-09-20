@@ -208,7 +208,7 @@ class FileTreeSelectionPrompt extends Base<
       rootNode.open = true
       this.active = this.active || rootNode.children?.[0]
       if (this.active) {
-        this.prepareChildren(this.active)
+        await this.prepareChildren(this.active)
       }
       this.render()
     }
