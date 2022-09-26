@@ -18,8 +18,12 @@ export interface RootAndTarget {
   root: string
   targetAbsPath: string
 }
+export interface OptionContext {
+  engine: 'tsc' | 'vue-tsc'
+}
 export type Context = RootAndTarget & {
   rawErrsMap: RawErrsMap
   openedDirs: Set<string>
+  options: OptionContext
   lastActivePath?: string
 }

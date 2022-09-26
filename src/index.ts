@@ -9,6 +9,7 @@ import ensureTscVersion from './check-tsc-version'
 import { showAppHeader } from './show-console-print'
 import { getRawErrsSumCount, getTargetDir, isFilePath } from './utils'
 import { getRawErrsMapFromTsCompile } from './ts-errs-map'
+import { getCliOptionsContext } from './setup-cli-options'
 import type { Context, RawErrsMap } from './types'
 
 inquirer.registerPrompt('file-tree-selection', inquirerFileTreeSelection)
@@ -110,17 +111,14 @@ function showSelectFilePrompt(ctx: Context) {
   })
   return prompt
 }
-function guardErrsMapNotEmpty(rawErrsMap: RawErrsMap) {
-  const errsCount = getRawErrsSumCount(rawErrsMap)
-  if (errsCount === 0) {
-    console.log(`\n🎉 ${chalk.bold.greenBright('Found 0 Errors.')}\n`)
-    process.exit()
-  }
-}
 
 try {
   await ensureTscVersion()
   const cli = cac('tsc-err-dirs')
+  cli.option('-e <engine>, --engine <engine>', 'Select tsc execution program', {
+    default: 'tsc',
+  })
+
   showAppHeader()
 
   const parsedEnvArgs = cli.parse()
@@ -130,9 +128,19 @@ try {
     throw new Error("Can't run tsc-err-dirs on single file.")
   }
 
+  const ctx: Context = {
+    root: rootAbsPath,
+    targetAbsPath: rootAbsPath,
+    rawErrsMap: new Map(),
+    openedDirs: new Set<string>(),
+    options: {
+      ...getCliOptionsContext(cli),
+    },
+  }
+
   // Generate a map to store errors info
-  const _initRawErrsMap = await getRawErrsMapFromTsCompile(rootAbsPath)
-  guardErrsMapNotEmpty(_initRawErrsMap)
+  const _initRawErrsMap = await getRawErrsMapFromTsCompile(ctx)
+  ctx.rawErrsMap = _initRawErrsMap
 
   // Watch the `rootAbsPath` for any changes
   const rootWatcher = await new Promise<chokidar.FSWatcher>((resolve) => {
@@ -150,12 +158,6 @@ try {
       })
   })
 
-  const ctx: Context = {
-    root: rootAbsPath,
-    targetAbsPath: rootAbsPath,
-    rawErrsMap: _initRawErrsMap,
-    openedDirs: new Set<string>(),
-  }
   // Bind watcher to the selector view
   const selectFile = async (ctx: Context) => {
     return new Promise<string>((resolveSelectFile, rejectSelectFile) => {
@@ -193,8 +195,7 @@ try {
       if (error instanceof Error) {
         console.log(error.message)
         ctx.rawErrsMap.clear()
-        ctx.rawErrsMap = await getRawErrsMapFromTsCompile(rootAbsPath, true)
-        guardErrsMapNotEmpty(ctx.rawErrsMap)
+        ctx.rawErrsMap = await getRawErrsMapFromTsCompile(ctx, true)
         continue
       }
     }

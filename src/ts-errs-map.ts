@@ -9,13 +9,26 @@ import {
   showFirstTscCompilePathInfo,
   showTscReCompilePathInfo,
 } from './show-console-print'
-import { getLineByIndexesFromFile } from './utils'
-import type { CollectLineNumbers, RawErrsMap, TscErrorInfo } from './types'
+import { getLineByIndexesFromFile, getRawErrsSumCount } from './utils'
+import type {
+  CollectLineNumbers,
+  Context,
+  RawErrsMap,
+  TscErrorInfo,
+} from './types'
 
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url))
 const newLineRegExp = /\r?\n/
 const errCodeRegExp = /error TS(?<errCode>\d+)/
 const tscSpinner = ora(chalk.yellow('Start tsc compiling ...'))
+
+function guardErrsMapNotEmpty(rawErrsMap: RawErrsMap) {
+  const errsCount = getRawErrsSumCount(rawErrsMap)
+  if (errsCount === 0) {
+    console.log(`\n🎉 ${chalk.bold.greenBright('Found 0 Errors.')}\n`)
+    process.exit()
+  }
+}
 
 async function getErrPreviewLineByIndexFromFile(
   filePath: string,
@@ -97,7 +110,7 @@ async function makeTscErrorInfo(
 }
 export async function getTscCompileStdout(
   // The `cwd` dir requires an existing `tsconfig.json` file
-  rootAbsPath = process.cwd(),
+  { root: rootAbsPath = process.cwd(), options }: Context,
   isReCompile = false
 ) {
   const baseConfigPath = path.join(rootAbsPath, 'tsconfig.json')
@@ -127,7 +140,7 @@ export async function getTscCompileStdout(
 
   let tscErrorStdout = ''
   try {
-    const cmd = `tsc --noEmit --pretty false -p ${tmpConfigPath}`
+    const cmd = `${options.engine} --noEmit --pretty false -p ${tmpConfigPath}`
     isReCompile
       ? showTscReCompilePathInfo(rootAbsPath)
       : showFirstTscCompilePathInfo({
@@ -153,10 +166,11 @@ export async function getTscCompileStdout(
   return tscErrorStdout
 }
 export async function getRawErrsMapFromTsCompile(
-  rootAbsPath: string,
+  ctx: Context,
   isReCompile = false
 ) {
-  const tscErrorStdout = await getTscCompileStdout(rootAbsPath, isReCompile)
+  const { root: rootAbsPath } = ctx
+  const tscErrorStdout = await getTscCompileStdout(ctx, isReCompile)
   const rawErrsMap: RawErrsMap = new Map()
 
   // Merge details line with main line (i.e. which contains file path)
@@ -182,5 +196,7 @@ export async function getRawErrsMapFromTsCompile(
       rawErrsMap.get(errFilePath)?.push(errInfo)
     }
   })
+
+  guardErrsMapNotEmpty(rawErrsMap)
   return rawErrsMap
 }
