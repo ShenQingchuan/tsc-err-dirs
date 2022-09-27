@@ -30,6 +30,14 @@ npm i -g @slackoff/tsc-err-dirs
 tsc-err-dirs <path-to-your-project-root>
 ```
 
+## Options
+
+- `--engine` (shorthand: `-e`)
+  
+  **Type:** `'tsc' | 'vue-tsc'`
+  
+  Select which tsc to be executed.
+
 ## Internal
 
 Since `tsc` doesn't provide a way to get the errors count of each file, we have to use a trick to get it.

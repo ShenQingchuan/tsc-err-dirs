@@ -28,6 +28,14 @@ npm i -g @slackoff/tsc-err-dirs
 tsc-err-dirs <path-to-your-project-root>
 ```
 
+## 选项
+
+- `--engine` 缩写： `-e`
+  
+  **类型：** `'tsc' | 'vue-tsc'`
+  
+  选择你想要执行哪一种 tsc。
+
 ## 原理
 
 因为 `tsc` 无法在单独编译一个大项目中的某一个文件，我们必须找一个替代方案。
