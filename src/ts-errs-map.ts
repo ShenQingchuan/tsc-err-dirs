@@ -36,6 +36,7 @@ async function getErrPreviewLineByIndexFromFile(
   errMsg: string
 ) {
   const lineNumbers: CollectLineNumbers = {
+    prev: line - 1 < 0 ? undefined : line - 1,
     target: line,
     next: line + 1,
   }
@@ -141,9 +142,11 @@ export async function getTscCompileStdout(
     process.exit()
   }
 
-  let tscErrorStdout = ''
+  const tscErrorStdoutChunks: string[] = []
   try {
-    const cmd = `${options.engine} --noEmit --pretty false -p ${tmpConfigPath}`
+    const cmd = `${options.engine} --noEmit --pretty false ${
+      options.engine === 'vue-tsc' ? '' : `-p ${tmpConfigPath}`
+    }`
     isReCompile
       ? showTscReCompilePathInfo(rootAbsPath)
       : showFirstTscCompilePathInfo({
@@ -156,17 +159,20 @@ export async function getTscCompileStdout(
       stdout: 'pipe',
       reject: false,
     })
-    tscProcess.stdout?.on('data', (errInfoChunk) => {
-      tscErrorStdout += errInfoChunk
-    })
+    tscProcess.stdout
+      ?.on('data', (errInfoChunk) => {
+        tscErrorStdoutChunks.push(String(errInfoChunk))
+      })
+      .on('end', async () => {
+        tscSpinner.succeed(chalk.yellow('tsc compiling finished.'))
+        await rm(tmpConfigPath, { force: true })
+      })
     await tscProcess
-    tscSpinner.succeed(chalk.yellow('tsc compiling finished.'))
-    await rm(tmpConfigPath, { force: true })
   } catch (err) {
     tscSpinner.succeed(chalk.yellow('tsc compiling failed.'))
     console.log(chalk.red(`Error: ${err}`))
   }
-  return tscErrorStdout
+  return tscErrorStdoutChunks.join('')
 }
 export async function getRawErrsMapFromTsCompile(
   ctx: Context,
