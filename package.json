@@ -1,6 +1,6 @@
 {
   "name": "@slackoff/tsc-err-dirs",
-  "version": "0.0.22",
+  "version": "0.0.23",
   "packageManager": "pnpm@7.9.5",
   "description": "Show tsc errors by directories.",
   "type": "module",
