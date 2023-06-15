@@ -122,6 +122,9 @@ export async function getTscCompileStdout(
     const tmpTsConfig: Record<string, any> = { ...baseConfigJSON }
 
     // Override some options
+    if (!tmpTsConfig.compilerOptions) {
+      tmpTsConfig.compilerOptions = {}
+    }
     tmpTsConfig.compilerOptions.emitDeclarationOnly = false // Avoid conflict with --noEmit
     tmpTsConfig.compilerOptions.incremental = true
     tmpTsConfig.compilerOptions.tsBuildInfoFile = path.join(
